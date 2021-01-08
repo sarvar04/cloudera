@@ -1,0 +1,98 @@
+Reference - https://github.com/ChemaGit/hive-impala-data-analyst/blob/master/impala/running-queries-using-impala.md
+https://github.com/dgadiraju/data
+
+Download Dataset ->  
+su - hdfs
+wget -cO - https://codeload.github.com/dgadiraju/data/zip/master > master.zip
+unzip master.zip
+hdfs dfs -put data-master/retail_db/* /user/hive/
+hdfs dfs -chown hive:hive /user/hive/*
+hdfs dfs -chmod 777 /user/hive/*
+
+beeline
+!connect jdbc:hive2://ip-10-0-0-20.us-east-2.compute.internal:10000/default
+
+
+hive-create-retail_db.sql
+-- first create database using this command
+-- create database <database_name>;
+-- Switch to database
+-- use <database_name>;
+-- create tables and load data using below commands
+-- Run show tables to list the tables
+create table departments (
+department_id int,
+department_name string
+) row format delimited fields terminated by ',';
+
+create table categories (
+category_id int,
+category_department_id int,
+category_name string
+) row format delimited fields terminated by ',';
+
+create table products (
+product_id int,
+product_category_id int,
+product_name string,
+product_description string,
+product_price float,
+product_image string
+) row format delimited fields terminated by ',';
+
+create table order_items (
+order_item_id int,
+order_item_order_id int,
+order_item_product_id int,
+order_item_quantity int,
+order_item_subtotal float,
+order_item_product_price float
+) row format delimited fields terminated by ',';
+
+create table orders (
+order_id int,
+order_date string,
+order_customer_id int,
+order_status string
+) row format delimited fields terminated by ',';
+
+create table customers (
+customer_id int,
+customer_fname string,
+customer_lname string,
+customer_email string,
+customer_password string,
+customer_street string,
+customer_city string,
+customer_state string,
+customer_zipcode string
+) row format delimited fields terminated by ',';
+
+
+load data inpath '/user/hive/categories' into table categories;
+load data inpath '/user/hive/customers' into table customers;
+load data inpath '/user/hive/departments' into table departments;
+load data inpath '/user/hive/order_items' into table order_items;
+load data inpath '/user/hive/orders' into table orders;
+load data inpath '/user/hive/products' into table products;
+
+
+HIVE COMMANDS - (https://github.com/ChemaGit/hive-impala-data-analyst/blob/master/hive/theory-exercises/writing-queries/writing-queries.md)
+
+SELECT SUBSTRING(o.order_date,1,10) AS order_date, ROUND(SUM(oi.order_item_subtotal), 2) AS daily_revenue
+FROM orders o JOIN order_items oi ON(o.order_id = oi.order_item_order_id)
+WHERE o.order_status IN('COMPLETE','CLOSED')
+GROUP BY o.order_date
+ORDER BY daily_revenue DESC
+LIMIT 10;
+
+SELECT order_item_order_id, order_item_product_id,order_item_quantity * order_item_product_price AS order_item_revenue, order_item_subtotal
+FROM order_items LIMIT 10;
+
+SELECT o.*,
+  CASE WHEN o.order_status IN('COMPLETE','CLOSED') THEN 'COMPLETED'
+  WHEN o.order_status IN('PENDING', 'PENDING_PAYMENT','PAYMENT_REVIEW','PROCESSING') THEN 'PENDING'
+  ELSE 'OTHER'
+END AS actual_status
+FROM orders o LIMIT 100;
+

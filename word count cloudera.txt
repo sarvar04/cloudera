@@ -1,0 +1,35 @@
+https://github.com/saidl14s/hadoop_tutorial
+su - hdfs 
+wget -cO - https://codeload.github.com/saidl14s/hadoop_tutorial/zip/master > sarvar.zip
+unzip sarvar.zip
+mv hadoop_tutorial-master cloudera-wordcount
+rm -rf sarvar.zip
+
+wget http://mattmahoney.net/dc/enwik8.zip
+unzip enwik8.zip
+mv enwik8 file1
+rm -rf enwik8.zip
+
+wget http://mattmahoney.net/dc/enwik9.zip
+unzip enwik9.zip
+mv enwik9 file2
+rm -rf enwik9.zip
+
+wget https://norvig.com/big.txt 
+mv big.txt file3
+
+
+hadoop fs -put file* /user/cloudera/wordcount/input
+hadoop fs -rm -f -r  /user/cloudera/wordcount/output
+rm -rf file*
+
+hadoop fs -mkdir /user/cloudera
+hadoop fs -mkdir /user/cloudera/wordcount
+hadoop fs -mkdir /user/cloudera/wordcount/input
+
+cd cloudera-wordcount
+cd WordCount1
+
+hadoop jar wordcount.jar org.myorg.WordCount /user/cloudera/wordcount/input /user/cloudera/wordcount/output
+hadoop fs -cat /user/cloudera/wordcount/output/* > output 
+sort -nk2 output 

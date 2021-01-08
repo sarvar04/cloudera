@@ -1,0 +1,31 @@
+su - hdfs
+wget -cO -  https://codeload.github.com/dgadiraju/nyse_all/zip/master > master.zip
+unzip master.zip
+rm -rf master.zip
+cd nyse_all-master/
+hdfs dfs -put nyse_data /user/impala
+hdfs dfs -chown impala:impala /user/impala/*
+hdfs dfs -ls /user/impala/
+
+
+impala-shell -i ip-10-0-0-26.us-east-2.compute.internal:21000
+
+CREATE DATABASE IF NOT EXISTS nyse;
+USE nyse;
+
+CREATE TABLE IF NOT EXISTS stocks_eod (
+  stockticker STRING,
+  tradedate INT,
+  openprice FLOAT,
+  highprice FLOAT,
+  lowprice FLOAT,
+  closeprice FLOAT,
+  volume BIGINT
+) ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+LOAD DATA INPATH '/user/training/nyse_data/' OVERWRITE INTO TABLE stocks_eod;
+
+SELECT * 
+FROM stocks_eod
+ORDER BY tradedate,stockticker; 
